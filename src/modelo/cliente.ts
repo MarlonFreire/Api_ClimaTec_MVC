@@ -1,43 +1,66 @@
+import { randomUUID } from "crypto"
+
+export type ClienteProps = {
+  id: string
+  nome: string
+  telefone: string
+  dataCadastro: Date
+}
+
 export class Cliente {
-  private constructor(
-    private readonly _id: number,
-    private readonly _nome: string,
-    private readonly _telefone: string,
-    private readonly _dataCadastro: Date,
-  ) {}
+  private constructor(readonly props: ClienteProps) {}
 
-  static criar(id: number, nome: string, telefone: string, dataCadastro: Date): Cliente {
-    return new Cliente(id, nome, telefone, dataCadastro)
+  public static build(nome: string, telefone: string) {
+    const props: ClienteProps = {
+      id: randomUUID(),
+      nome,
+      telefone,
+      dataCadastro: new Date(),
+    }
+
+    return new Cliente(props)
   }
 
-  static novo(nome: string, telefone: string): Omit<Cliente, "_id" | "_dataCadastro"> {
-    return {
-      _nome: nome,
-      _telefone: telefone,
-    } as any
+  public static construir(id: string, nome: string, telefone: string, dataCadastro: Date) {
+    const props: ClienteProps = {
+      id,
+      nome,
+      telefone,
+      dataCadastro,
+    }
+
+    return new Cliente(props)
   }
 
-  get id(): number {
-    return this._id
+  public alterarNome(novoNome: string): Cliente {
+    const novasProps: ClienteProps = {
+      ...this.props,
+      nome: novoNome,
+    }
+    return new Cliente(novasProps)
   }
 
-  get nome(): string {
-    return this._nome
+  public alterarTelefone(novoTelefone: string): Cliente {
+    const novasProps: ClienteProps = {
+      ...this.props,
+      telefone: novoTelefone,
+    }
+    return new Cliente(novasProps)
   }
 
-  get telefone(): string {
-    return this._telefone
+  public get id() {
+    return this.props.id
   }
 
-  get dataCadastro(): Date {
-    return this._dataCadastro
+  public get nome() {
+    return this.props.nome
   }
 
-  comNome(novoNome: string): Cliente {
-    return new Cliente(this._id, novoNome, this._telefone, this._dataCadastro)
+  public get telefone() {
+    return this.props.telefone
   }
 
-  comTelefone(novoTelefone: string): Cliente {
-    return new Cliente(this._id, this._nome, novoTelefone, this._dataCadastro)
+  public get dataCadastro() {
+    return this.props.dataCadastro
   }
 }

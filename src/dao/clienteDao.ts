@@ -1,83 +1,55 @@
-import type { ResultSetHeader, RowDataPacket } from "mysql2"
-import { Cliente } from "../modelo/cliente"
 import conexao from "../util/conexao"
+import { Cliente } from "../modelo/cliente"
+import type { RowDataPacket, ResultSetHeader } from "mysql2"
 
 export class ClienteDao {
-  async inserir(cliente: Omit<Cliente, "id" | "dataCadastro">): Promise<Cliente> {
-    const sql = "INSERT INTO clientes (nome, telefone, data_cadastro) VALUES (?, ?, NOW())"
-    const valores = [(cliente as any)._nome, (cliente as any)._telefone]
+  async criar(cliente: Cliente): Promise<string> {
+    const sql = "INSERT INTO clientes (id_cliente, nome, telefone, data_cadastro) VALUES (?, ?, ?, ?)"
+    const valores = [cliente.id, cliente.nome, cliente.telefone, cliente.dataCadastro]
 
-    const [resultado] = await conexao.execute<ResultSetHeader>(sql, valores)
+    await conexao.execute<ResultSetHeader>(sql, valores)
+    return cliente.id
+  }
 
-    const [rows] = await conexao.execute<RowDataPacket[]>("SELECT * FROM clientes WHERE id_cliente = ?", [
-      resultado.insertId,
-    ])
+  async buscarTodos(): Promise<Cliente[]> {
+    const sql = "SELECT id_cliente, nome, telefone, data_cadastro FROM clientes ORDER BY nome"
+    const [linhas] = await conexao.execute<RowDataPacket[]>(sql)
 
-    const clienteInserido = rows[0]
-    return Cliente.criar(
-      clienteInserido.id_cliente,
-      clienteInserido.nome,
-      clienteInserido.telefone,
-      clienteInserido.data_cadastro,
+    return linhas.map((linha) =>
+      Cliente.construir(linha.id_cliente, linha.nome, linha.telefone, new Date(linha.data_cadastro)),
     )
   }
 
   async buscarPorId(id: string): Promise<Cliente | null> {
-    const sql = "SELECT * FROM clientes WHERE id_cliente = ?"
-    const [rows] = await conexao.execute<RowDataPacket[]>(sql, [id])
+    const sql = "SELECT id_cliente, nome, telefone, data_cadastro FROM clientes WHERE id_cliente = ?"
+    const [linhas] = await conexao.execute<RowDataPacket[]>(sql, [id])
 
-    if (rows.length === 0) {
+    if (linhas.length === 0) {
       return null
     }
 
-    const cliente = rows[0]
-    return Cliente.criar(cliente.id_cliente, cliente.nome, cliente.telefone, cliente.data_cadastro)
+    const linha = linhas[0]
+    return Cliente.construir(linha.id_cliente, linha.nome, linha.telefone, new Date(linha.data_cadastro))
   }
 
   async buscarPorTelefone(telefone: string): Promise<Cliente | null> {
-    const sql = "SELECT * FROM clientes WHERE telefone = ?"
-    const [rows] = await conexao.execute<RowDataPacket[]>(sql, [telefone])
+    const sql = "SELECT id_cliente, nome, telefone, data_cadastro FROM clientes WHERE telefone = ?"
+    const [linhas] = await conexao.execute<RowDataPacket[]>(sql, [telefone])
 
-    if (rows.length === 0) {
+    if (linhas.length === 0) {
       return null
     }
 
-    const cliente = rows[0]
-    return Cliente.criar(cliente.id_cliente, cliente.nome, cliente.telefone, cliente.data_cadastro)
+    const linha = linhas[0]
+    return Cliente.construir(linha.id_cliente, linha.nome, linha.telefone, new Date(linha.data_cadastro))
   }
 
-  async listarTodos(): Promise<Cliente[]> {
-    const sql = "SELECT * FROM clientes ORDER BY data_cadastro DESC"
-    const [rows] = await conexao.execute<RowDataPacket[]>(sql)
+  async atualizar(cliente: Cliente): Promise<boolean> {
+    const sql = "UPDATE clientes SET nome = ?, telefone = ? WHERE id_cliente = ?"
+    const valores = [cliente.nome, cliente.telefone, cliente.id]
 
-    return rows.map((cliente) =>
-      Cliente.criar(cliente.id_cliente, cliente.nome, cliente.telefone, cliente.data_cadastro),
-    )
-  }
-
-  async atualizar(id: string, dadosAtualizacao: Partial<Cliente>): Promise<Cliente | null> {
-    const campos: string[] = []
-    const valores: any[] = []
-
-    if ((dadosAtualizacao as any)._nome) {
-      campos.push("nome = ?")
-      valores.push((dadosAtualizacao as any)._nome)
-    }
-
-    if ((dadosAtualizacao as any)._telefone) {
-      campos.push("telefone = ?")
-      valores.push((dadosAtualizacao as any)._telefone)
-    }
-
-    if (campos.length === 0) {
-      return this.buscarPorId(id)
-    }
-
-    valores.push(id)
-    const sql = `UPDATE clientes SET ${campos.join(", ")} WHERE id_cliente = ?`
-
-    await conexao.execute(sql, valores)
-    return this.buscarPorId(id)
+    const [resultado] = await conexao.execute<ResultSetHeader>(sql, valores)
+    return resultado.affectedRows > 0
   }
 
   async deletar(id: string): Promise<boolean> {

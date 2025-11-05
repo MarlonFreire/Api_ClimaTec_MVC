@@ -8,9 +8,9 @@ export class ClienteControle {
     this.clienteServico = new ClienteServico()
   }
 
-  cadastrar = async (req: Request, res: Response): Promise<void> => {
+  async cadastrar(req: Request, res: Response): Promise<void> {
     try {
-      const cliente = await this.clienteServico.cadastrarCliente(req.body)
+      const cliente = await this.clienteServico.criarCliente(req.body)
       res.status(201).json({
         mensagem: "Cliente cadastrado com sucesso",
         cliente,
@@ -23,7 +23,19 @@ export class ClienteControle {
     }
   }
 
-  buscarPorId = async (req: Request, res: Response): Promise<void> => {
+  async listarTodos(req: Request, res: Response): Promise<void> {
+    try {
+      const clientes = await this.clienteServico.listarClientes()
+      res.status(200).json(clientes)
+    } catch (erro: any) {
+      res.status(500).json({
+        mensagem: "Erro ao listar clientes",
+        erro: erro.message,
+      })
+    }
+  }
+
+  async buscarPorId(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 
@@ -52,7 +64,7 @@ export class ClienteControle {
     }
   }
 
-  buscarPorTelefone = async (req: Request, res: Response): Promise<void> => {
+  async buscarPorTelefone(req: Request, res: Response): Promise<void> {
     try {
       const { telefone } = req.params
 
@@ -81,19 +93,7 @@ export class ClienteControle {
     }
   }
 
-  listarTodos = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const clientes = await this.clienteServico.listarTodosClientes()
-      res.status(200).json(clientes)
-    } catch (erro: any) {
-      res.status(500).json({
-        mensagem: "Erro ao listar clientes",
-        erro: erro.message,
-      })
-    }
-  }
-
-  atualizar = async (req: Request, res: Response): Promise<void> => {
+  async atualizar(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 
@@ -125,7 +125,7 @@ export class ClienteControle {
     }
   }
 
-  deletar = async (req: Request, res: Response): Promise<void> => {
+  async deletar(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 

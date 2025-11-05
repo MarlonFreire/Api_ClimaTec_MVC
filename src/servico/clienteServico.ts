@@ -1,6 +1,6 @@
 import { ClienteDao } from "../dao/clienteDao"
 import { Cliente } from "../modelo/cliente"
-import type { ClienteCadastroDto, ClienteAtualizacaoDto, ClienteRespostaDto } from "../dto/clienteDto"
+import type { ClienteCreateDto, ClienteUpdateDto, ClienteResponseDto } from "../dto/clienteDto"
 
 export class ClienteServico {
   private clienteDao: ClienteDao
@@ -9,120 +9,118 @@ export class ClienteServico {
     this.clienteDao = new ClienteDao()
   }
 
-  async cadastrarCliente(dados: ClienteCadastroDto): Promise<ClienteRespostaDto> {
+  async criarCliente(dadosCliente: ClienteCreateDto): Promise<ClienteResponseDto> {
     // Validações
-    if (!dados.nome || dados.nome.trim().length === 0) {
-      throw new Error("Nome é obrigatório")
+    if (!dadosCliente.nome || dadosCliente.nome.trim().length < 2) {
+      throw new Error("Nome deve ter pelo menos 2 caracteres")
     }
 
-    if (!dados.telefone || dados.telefone.trim().length === 0) {
-      throw new Error("Telefone é obrigatório")
+    if (!dadosCliente.telefone || dadosCliente.telefone.trim().length < 10) {
+      throw new Error("Telefone inválido")
     }
 
     // Verificar se telefone já existe
-    const clienteExistente = await this.clienteDao.buscarPorTelefone(dados.telefone)
+    const clienteExistente = await this.clienteDao.buscarPorTelefone(dadosCliente.telefone)
     if (clienteExistente) {
-      throw new Error("Telefone já cadastrado")
+      throw new Error("Telefone já está em uso")
     }
 
-    const novoCliente = Cliente.novo(dados.nome, dados.telefone)
-    const clienteCriado = await this.clienteDao.inserir(novoCliente)
+    // Criar cliente usando o método build
+    const cliente = Cliente.build(dadosCliente.nome, dadosCliente.telefone)
+    const id = await this.clienteDao.criar(cliente)
 
-    return {
-      id: clienteCriado.id,
-      nome: clienteCriado.nome,
-      telefone: clienteCriado.telefone,
-      dataCadastro: clienteCriado.dataCadastro,
+    // Buscar cliente criado para retornar
+    const clienteCriado = await this.clienteDao.buscarPorId(id)
+    if (!clienteCriado) {
+      throw new Error("Erro ao criar cliente")
     }
+
+    return this.converterParaDto(clienteCriado)
   }
 
-  async buscarClientePorId(id: string): Promise<ClienteRespostaDto | null> {
+  async listarClientes(): Promise<ClienteResponseDto[]> {
+    const clientes = await this.clienteDao.buscarTodos()
+    return clientes.map((cliente) => this.converterParaDto(cliente))
+  }
+
+  async buscarClientePorId(id: string): Promise<ClienteResponseDto | null> {
+    if (!id || id.trim().length === 0) {
+      throw new Error("ID inválido")
+    }
+
     const cliente = await this.clienteDao.buscarPorId(id)
-
-    if (!cliente) {
-      return null
-    }
-
-    return {
-      id: cliente.id,
-      nome: cliente.nome,
-      telefone: cliente.telefone,
-      dataCadastro: cliente.dataCadastro,
-    }
+    return cliente ? this.converterParaDto(cliente) : null
   }
 
-  async buscarClientePorTelefone(telefone: string): Promise<ClienteRespostaDto | null> {
+  async buscarClientePorTelefone(telefone: string): Promise<ClienteResponseDto | null> {
+    if (!telefone || telefone.trim().length === 0) {
+      throw new Error("Telefone inválido")
+    }
+
     const cliente = await this.clienteDao.buscarPorTelefone(telefone)
+    return cliente ? this.converterParaDto(cliente) : null
+  }
 
+  async atualizarCliente(id: string, dadosAtualizacao: ClienteUpdateDto): Promise<ClienteResponseDto | null> {
+    if (!id || id.trim().length === 0) {
+      throw new Error("ID inválido")
+    }
+
+    let cliente = await this.clienteDao.buscarPorId(id)
     if (!cliente) {
       return null
     }
 
-    return {
-      id: cliente.id,
-      nome: cliente.nome,
-      telefone: cliente.telefone,
-      dataCadastro: cliente.dataCadastro,
-    }
-  }
-
-  async listarTodosClientes(): Promise<ClienteRespostaDto[]> {
-    const clientes = await this.clienteDao.listarTodos()
-
-    return clientes.map((cliente) => ({
-      id: cliente.id,
-      nome: cliente.nome,
-      telefone: cliente.telefone,
-      dataCadastro: cliente.dataCadastro,
-    }))
-  }
-
-  async atualizarCliente(id: string, dados: ClienteAtualizacaoDto): Promise<ClienteRespostaDto | null> {
-    const clienteExistente = await this.clienteDao.buscarPorId(id)
-
-    if (!clienteExistente) {
-      throw new Error("Cliente não encontrado")
-    }
-
-    // Se está atualizando telefone, verificar se já existe
-    if (dados.telefone && dados.telefone !== clienteExistente.telefone) {
-      const telefoneEmUso = await this.clienteDao.buscarPorTelefone(dados.telefone)
-      if (telefoneEmUso) {
-        throw new Error("Telefone já cadastrado")
+    // Validações e atualizações usando métodos imutáveis
+    if (dadosAtualizacao.nome !== undefined) {
+      if (dadosAtualizacao.nome.trim().length < 2) {
+        throw new Error("Nome deve ter pelo menos 2 caracteres")
       }
+      cliente = cliente.alterarNome(dadosAtualizacao.nome)
     }
 
-    let clienteAtualizado = clienteExistente
+    if (dadosAtualizacao.telefone !== undefined) {
+      if (dadosAtualizacao.telefone.trim().length < 10) {
+        throw new Error("Telefone inválido")
+      }
 
-    if (dados.nome) {
-      clienteAtualizado = clienteAtualizado.comNome(dados.nome)
+      // Verificar se o novo telefone já está em uso por outro cliente
+      const clienteComTelefone = await this.clienteDao.buscarPorTelefone(dadosAtualizacao.telefone)
+      if (clienteComTelefone && clienteComTelefone.id !== id) {
+        throw new Error("Telefone já está em uso")
+      }
+
+      cliente = cliente.alterarTelefone(dadosAtualizacao.telefone)
     }
 
-    if (dados.telefone) {
-      clienteAtualizado = clienteAtualizado.comTelefone(dados.telefone)
+    const atualizado = await this.clienteDao.atualizar(cliente)
+    if (!atualizado) {
+      throw new Error("Erro ao atualizar cliente")
     }
 
-    const resultado = await this.clienteDao.atualizar(id, clienteAtualizado)
-
-    if (!resultado) {
-      return null
-    }
-
-    return {
-      id: resultado.id,
-      nome: resultado.nome,
-      telefone: resultado.telefone,
-      dataCadastro: resultado.dataCadastro,
-    }
+    const clienteAtualizado = await this.clienteDao.buscarPorId(id)
+    return clienteAtualizado ? this.converterParaDto(clienteAtualizado) : null
   }
 
   async deletarCliente(id: string): Promise<boolean> {
-    const clienteExistente = await this.clienteDao.buscarPorId(id)
+    if (!id || id.trim().length === 0) {
+      throw new Error("ID inválido")
+    }
 
+    const clienteExistente = await this.clienteDao.buscarPorId(id)
     if (!clienteExistente) {
-      throw new Error("Cliente não encontrado")
+      return false
     }
 
     return await this.clienteDao.deletar(id)
+  }
+
+  private converterParaDto(cliente: Cliente): ClienteResponseDto {
+    return {
+      id: cliente.id,
+      nome: cliente.nome,
+      telefone: cliente.telefone,
+      dataCadastro: cliente.dataCadastro,
+    }
   }
 }
