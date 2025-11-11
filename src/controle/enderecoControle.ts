@@ -8,9 +8,9 @@ export class EnderecoControle {
     this.enderecoServico = new EnderecoServico()
   }
 
-  cadastrar = async (req: Request, res: Response): Promise<void> => {
+  async cadastrar(req: Request, res: Response): Promise<void> {
     try {
-      const endereco = await this.enderecoServico.cadastrarEndereco(req.body)
+      const endereco = await this.enderecoServico.criarEndereco(req.body)
       res.status(201).json({
         mensagem: "Endereço cadastrado com sucesso",
         endereco,
@@ -23,7 +23,19 @@ export class EnderecoControle {
     }
   }
 
-  buscarPorId = async (req: Request, res: Response): Promise<void> => {
+  async listarTodos(req: Request, res: Response): Promise<void> {
+    try {
+      const enderecos = await this.enderecoServico.listarEnderecos()
+      res.status(200).json(enderecos)
+    } catch (erro: any) {
+      res.status(500).json({
+        mensagem: "Erro ao listar endereços",
+        erro: erro.message,
+      })
+    }
+  }
+
+  async buscarPorId(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 
@@ -52,7 +64,7 @@ export class EnderecoControle {
     }
   }
 
-  buscarPorCliente = async (req: Request, res: Response): Promise<void> => {
+  async buscarPorCliente(req: Request, res: Response): Promise<void> {
     try {
       const { idCliente } = req.params
 
@@ -73,7 +85,7 @@ export class EnderecoControle {
     }
   }
 
-  atualizar = async (req: Request, res: Response): Promise<void> => {
+  async atualizar(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 
@@ -105,7 +117,7 @@ export class EnderecoControle {
     }
   }
 
-  deletar = async (req: Request, res: Response): Promise<void> => {
+  async deletar(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 

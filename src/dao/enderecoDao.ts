@@ -1,133 +1,109 @@
-import type { ResultSetHeader, RowDataPacket } from "mysql2"
-import { Endereco } from "../modelo/endereco"
 import conexao from "../util/conexao"
+import { Endereco } from "../modelo/endereco"
+import type { RowDataPacket, ResultSetHeader } from "mysql2"
 
 export class EnderecoDao {
-  async inserir(endereco: Omit<Endereco, "id">): Promise<Endereco> {
-    const sql = `INSERT INTO enderecos 
-      (id_cliente, rua, numero, bairro, cidade, uf, cep, complemento) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-
+  async criar(endereco: Endereco): Promise<string> {
+    const sql =
+      "INSERT INTO enderecos (id_endereco, id_cliente, rua, numero, bairro, cidade, uf, cep, complemento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     const valores = [
-      (endereco as any)._idCliente,
-      (endereco as any)._rua,
-      (endereco as any)._numero,
-      (endereco as any)._bairro,
-      (endereco as any)._cidade,
-      (endereco as any)._uf,
-      (endereco as any)._cep,
-      (endereco as any)._complemento || null,
-    ]
-
-    const [resultado] = await conexao.execute<ResultSetHeader>(sql, valores)
-
-    const [rows] = await conexao.execute<RowDataPacket[]>("SELECT * FROM enderecos WHERE id_endereco = ?", [
-      resultado.insertId,
-    ])
-
-    const enderecoInserido = rows[0]
-    return Endereco.criar(
-      enderecoInserido.id_endereco,
-      enderecoInserido.id_cliente,
-      enderecoInserido.rua,
-      enderecoInserido.numero,
-      enderecoInserido.bairro,
-      enderecoInserido.cidade,
-      enderecoInserido.uf,
-      enderecoInserido.cep,
-      enderecoInserido.complemento,
-    )
-  }
-
-  async buscarPorId(id: string): Promise<Endereco | null> {
-    const sql = "SELECT * FROM enderecos WHERE id_endereco = ?"
-    const [rows] = await conexao.execute<RowDataPacket[]>(sql, [id])
-
-    if (rows.length === 0) {
-      return null
-    }
-
-    const endereco = rows[0]
-    return Endereco.criar(
-      endereco.id_endereco,
-      endereco.id_cliente,
+      endereco.id,
+      endereco.idCliente,
       endereco.rua,
       endereco.numero,
       endereco.bairro,
       endereco.cidade,
       endereco.uf,
       endereco.cep,
-      endereco.complemento,
-    )
+      endereco.complemento || null,
+    ]
+
+    await conexao.execute<ResultSetHeader>(sql, valores)
+    return endereco.id
   }
 
-  async buscarPorCliente(idCliente: string): Promise<Endereco[]> {
-    const sql = "SELECT * FROM enderecos WHERE id_cliente = ?"
-    const [rows] = await conexao.execute<RowDataPacket[]>(sql, [idCliente])
+  async buscarTodos(): Promise<Endereco[]> {
+    const sql =
+      "SELECT id_endereco, id_cliente, rua, numero, bairro, cidade, uf, cep, complemento FROM enderecos ORDER BY cidade, bairro"
+    const [linhas] = await conexao.execute<RowDataPacket[]>(sql)
 
-    return rows.map((endereco) =>
-      Endereco.criar(
-        endereco.id_endereco,
-        endereco.id_cliente,
-        endereco.rua,
-        endereco.numero,
-        endereco.bairro,
-        endereco.cidade,
-        endereco.uf,
-        endereco.cep,
-        endereco.complemento,
+    return linhas.map((linha) =>
+      Endereco.construir(
+        linha.id_endereco,
+        linha.id_cliente,
+        linha.rua,
+        linha.numero,
+        linha.bairro,
+        linha.cidade,
+        linha.uf,
+        linha.cep,
+        linha.complemento,
       ),
     )
   }
 
-  async atualizar(id: string, dadosAtualizacao: Partial<Endereco>): Promise<Endereco | null> {
-    const campos: string[] = []
-    const valores: any[] = []
+  async buscarPorId(id: string): Promise<Endereco | null> {
+    const sql =
+      "SELECT id_endereco, id_cliente, rua, numero, bairro, cidade, uf, cep, complemento FROM enderecos WHERE id_endereco = ?"
+    const [linhas] = await conexao.execute<RowDataPacket[]>(sql, [id])
 
-    if ((dadosAtualizacao as any)._rua) {
-      campos.push("rua = ?")
-      valores.push((dadosAtualizacao as any)._rua)
+    if (linhas.length === 0) {
+      return null
     }
 
-    if ((dadosAtualizacao as any)._numero) {
-      campos.push("numero = ?")
-      valores.push((dadosAtualizacao as any)._numero)
+    const linha = linhas[0]
+    if (!linha) {
+      return null
     }
+    return Endereco.construir(
+      linha.id_endereco,
+      linha.id_cliente,
+      linha.rua,
+      linha.numero,
+      linha.bairro,
+      linha.cidade,
+      linha.uf,
+      linha.cep,
+      linha.complemento,
+    )
+  }
 
-    if ((dadosAtualizacao as any)._bairro) {
-      campos.push("bairro = ?")
-      valores.push((dadosAtualizacao as any)._bairro)
-    }
+  async buscarPorCliente(idCliente: string): Promise<Endereco[]> {
+    const sql =
+      "SELECT id_endereco, id_cliente, rua, numero, bairro, cidade, uf, cep, complemento FROM enderecos WHERE id_cliente = ?"
+    const [linhas] = await conexao.execute<RowDataPacket[]>(sql, [idCliente])
 
-    if ((dadosAtualizacao as any)._cidade) {
-      campos.push("cidade = ?")
-      valores.push((dadosAtualizacao as any)._cidade)
-    }
+    return linhas.map((linha) =>
+      Endereco.construir(
+        linha.id_endereco,
+        linha.id_cliente,
+        linha.rua,
+        linha.numero,
+        linha.bairro,
+        linha.cidade,
+        linha.uf,
+        linha.cep,
+        linha.complemento,
+      ),
+    )
+  }
 
-    if ((dadosAtualizacao as any)._uf) {
-      campos.push("uf = ?")
-      valores.push((dadosAtualizacao as any)._uf)
-    }
+  async atualizar(endereco: Endereco): Promise<boolean> {
+    const sql =
+      "UPDATE enderecos SET rua = ?, numero = ?, bairro = ?, cidade = ?, uf = ?, cep = ?, complemento = ? WHERE id_endereco = ?"
+    const valores = [
+      endereco.rua,
+      endereco.numero,
+      endereco.bairro,
+      endereco.cidade,
+      endereco.uf,
+      endereco.cep,
+      endereco.complemento || null,
+      endereco.id,
+    ]
 
-    if ((dadosAtualizacao as any)._cep) {
-      campos.push("cep = ?")
-      valores.push((dadosAtualizacao as any)._cep)
-    }
-
-    if ((dadosAtualizacao as any)._complemento !== undefined) {
-      campos.push("complemento = ?")
-      valores.push((dadosAtualizacao as any)._complemento)
-    }
-
-    if (campos.length === 0) {
-      return this.buscarPorId(id)
-    }
-
-    valores.push(id)
-    const sql = `UPDATE enderecos SET ${campos.join(", ")} WHERE id_endereco = ?`
-
-    await conexao.execute(sql, valores)
-    return this.buscarPorId(id)
+    const [resultado] = await conexao.execute<ResultSetHeader>(sql, valores)
+    return resultado.affectedRows > 0
   }
 
   async deletar(id: string): Promise<boolean> {

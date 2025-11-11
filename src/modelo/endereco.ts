@@ -1,19 +1,22 @@
+import { randomUUID } from "crypto"
+
+export type EnderecoProps = {
+  id: string
+  idCliente: string
+  rua: string
+  numero: string
+  bairro: string
+  cidade: string
+  uf: string
+  cep: string
+  complemento?: string | undefined
+}
+
 export class Endereco {
-  private constructor(
-    private readonly _id: number,
-    private readonly _idCliente: number,
-    private readonly _rua: string,
-    private readonly _numero: string,
-    private readonly _bairro: string,
-    private readonly _cidade: string,
-    private readonly _uf: string,
-    private readonly _cep: string,
-    private readonly _complemento?: string,
-  ) {}
+  private constructor(readonly props: EnderecoProps) {}
 
-  static criar(
-    id: number,
-    idCliente: number,
+  public static build(
+    idCliente: string,
     rua: string,
     numero: string,
     bairro: string,
@@ -21,12 +24,25 @@ export class Endereco {
     uf: string,
     cep: string,
     complemento?: string,
-  ): Endereco {
-    return new Endereco(id, idCliente, rua, numero, bairro, cidade, uf, cep, complemento)
+  ) {
+    const props: EnderecoProps = {
+      id: randomUUID(),
+      idCliente,
+      rua,
+      numero,
+      bairro,
+      cidade,
+      uf,
+      cep,
+      complemento,
+    }
+
+    return new Endereco(props)
   }
 
-  static novo(
-    idCliente: number,
+  public static construir(
+    id: string,
+    idCliente: string,
     rua: string,
     numero: string,
     bairro: string,
@@ -34,52 +50,111 @@ export class Endereco {
     uf: string,
     cep: string,
     complemento?: string,
-  ): Omit<Endereco, "_id"> {
-    return {
-      _idCliente: idCliente,
-      _rua: rua,
-      _numero: numero,
-      _bairro: bairro,
-      _cidade: cidade,
-      _uf: uf,
-      _cep: cep,
-      _complemento: complemento,
-    } as any
+  ) {
+    const props: EnderecoProps = {
+      id,
+      idCliente,
+      rua,
+      numero,
+      bairro,
+      cidade,
+      uf,
+      cep,
+      complemento,
+    }
+
+    return new Endereco(props)
   }
 
-  get id(): number {
-    return this._id
+  public alterarRua(novaRua: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      rua: novaRua,
+    }
+    return new Endereco(novasProps)
   }
 
-  get idCliente(): number {
-    return this._idCliente
+  public alterarNumero(novoNumero: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      numero: novoNumero,
+    }
+    return new Endereco(novasProps)
   }
 
-  get rua(): string {
-    return this._rua
+  public alterarBairro(novoBairro: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      bairro: novoBairro,
+    }
+    return new Endereco(novasProps)
   }
 
-  get numero(): string {
-    return this._numero
+  public alterarCidade(novaCidade: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      cidade: novaCidade,
+    }
+    return new Endereco(novasProps)
   }
 
-  get bairro(): string {
-    return this._bairro
+  public alterarUf(novaUf: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      uf: novaUf,
+    }
+    return new Endereco(novasProps)
   }
 
-  get cidade(): string {
-    return this._cidade
+  public alterarCep(novoCep: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      cep: novoCep,
+    }
+    return new Endereco(novasProps)
   }
 
-  get uf(): string {
-    return this._uf
+  public alterarComplemento(novoComplemento?: string): Endereco {
+    const novasProps: EnderecoProps = {
+      ...this.props,
+      complemento: novoComplemento,
+    }
+    return new Endereco(novasProps)
   }
 
-  get cep(): string {
-    return this._cep
+  public get id() {
+    return this.props.id
   }
 
-  get complemento(): string | undefined {
-    return this._complemento
+  public get idCliente() {
+    return this.props.idCliente
+  }
+
+  public get rua() {
+    return this.props.rua
+  }
+
+  public get numero() {
+    return this.props.numero
+  }
+
+  public get bairro() {
+    return this.props.bairro
+  }
+
+  public get cidade() {
+    return this.props.cidade
+  }
+
+  public get uf() {
+    return this.props.uf
+  }
+
+  public get cep() {
+    return this.props.cep
+  }
+
+  public get complemento() {
+    return this.props.complemento
   }
 }

@@ -1,5 +1,5 @@
-export interface EnderecoCadastroDto {
-  idCliente: number
+export interface EnderecoCreateDto {
+  idCliente: string
   rua: string
   numero: string
   bairro: string
@@ -9,7 +9,7 @@ export interface EnderecoCadastroDto {
   complemento?: string
 }
 
-export interface EnderecoAtualizacaoDto {
+export interface EnderecoUpdateDto {
   rua?: string
   numero?: string
   bairro?: string
@@ -19,9 +19,9 @@ export interface EnderecoAtualizacaoDto {
   complemento?: string
 }
 
-export interface EnderecoRespostaDto {
-  id: number
-  idCliente: number
+export interface EnderecoResponseDto {
+  id: string
+  idCliente: string
   rua: string
   numero: string
   bairro: string

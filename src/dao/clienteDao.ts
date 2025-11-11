@@ -28,7 +28,10 @@ export class ClienteDao {
       return null
     }
 
-    const linha = linhas[0]
+    const linha = (linhas as RowDataPacket[])[0]
+    if (!linha) {
+      return null
+    }
     return Cliente.construir(linha.id_cliente, linha.nome, linha.telefone, new Date(linha.data_cadastro))
   }
 
@@ -41,6 +44,9 @@ export class ClienteDao {
     }
 
     const linha = linhas[0]
+    if (!linha) {
+      return null
+    }
     return Cliente.construir(linha.id_cliente, linha.nome, linha.telefone, new Date(linha.data_cadastro))
   }
 

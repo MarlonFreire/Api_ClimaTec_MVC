@@ -183,7 +183,7 @@ export class EnderecoServico {
       cidade: endereco.cidade,
       uf: endereco.uf,
       cep: endereco.cep,
-      complemento: endereco.complemento,
+      complemento: endereco.complemento ?? "",
     }
   }
 }
