@@ -2,6 +2,10 @@ import express from "express"
 import { TecnicoControle } from "./controle/tecnicoControle"
 import { ClienteControle } from "./controle/clienteControle"
 import { EnderecoControle } from "./controle/enderecoControle"
+<<<<<<< HEAD
+import { ServicoControle } from "./controle/servicoControle"
+=======
+>>>>>>> 99bce2c5e7a03147915e7c1eca779cb740c2a959
 
 const app = express()
 
@@ -111,6 +115,43 @@ app.delete("/enderecos/:id", (req, res) => {
   return enderecoControle.deletar(req, res)
 })
 
+<<<<<<< HEAD
+
+
+
+// Cadastrar serviço
+app.post("/servicos", (req, res) => {
+  const servicoControle = new ServicoControle()
+  return servicoControle.cadastrar(req, res)
+})
+
+// Listar serviços
+app.get("/servicos", (req, res) => {
+  const servicoControle = new ServicoControle()
+  return servicoControle.listarTodos(req, res)
+})
+
+// Buscar serviço por ID
+app.get("/servicos/:id", (req, res) => {
+  const servicoControle = new ServicoControle()
+  return servicoControle.buscarPorId(req, res)
+})
+
+// Atualizar serviço
+app.put("/servicos/:id", (req, res) => {
+  const servicoControle = new ServicoControle()
+  return servicoControle.atualizar(req, res)
+})
+
+// Deletar serviço
+app.delete("/servicos/:id", (req, res) => {
+  const servicoControle = new ServicoControle()
+  return servicoControle.deletar(req, res)
+})
+
+
+=======
+>>>>>>> 99bce2c5e7a03147915e7c1eca779cb740c2a959
 app.listen(3000, () => {
   console.log(`Servidor rodando na porta http://localhost:3000`)
   console.log(`\nEndpoints disponíveis:`)
@@ -134,4 +175,15 @@ app.listen(3000, () => {
   console.log(`  GET    http://localhost:3000/enderecos/cliente/:idCliente - Buscar endereços por cliente`)
   console.log(`  PUT    http://localhost:3000/enderecos/:id - Atualizar endereço`)
   console.log(`  DELETE http://localhost:3000/enderecos/:id - Deletar endereço`)
+<<<<<<< HEAD
+  console.log(`\n=== SERVIÇOS ===`)
+  console.log(`  POST   http://localhost:3000/servicos - Cadastrar serviço`)
+  console.log(`  GET    http://localhost:3000/servicos - Listar serviços`)
+  console.log(`  GET    http://localhost:3000/servicos/:id - Buscar serviço por ID`)
+  console.log(`  PUT    http://localhost:3000/servicos/:id - Atualizar serviço`)
+  console.log(`  DELETE http://localhost:3000/servicos/:id - Deletar serviço`)
 })
+
+=======
+})
+>>>>>>> 99bce2c5e7a03147915e7c1eca779cb740c2a959
